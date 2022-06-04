@@ -1,0 +1,4 @@
+[submodule "server/cavoke"]
+	path = server/cavoke
+	url = https://github.com/cavoke-project/cavoke.git
+	branch = master

@@ -1,0 +1,26 @@
+name: Verify Cavoke Game
+on:
+  push
+jobs:
+  check-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Check main QML is present
+        run: test -f ./client/app.qml
+  check-server:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pip3 install requests
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Check Server Docker is buildable
+        uses: docker/build-push-action@v2
+        with:
+          file: server/Dockerfile
+          context: server
+          push: false
+          tags: my_cavoke_game_server

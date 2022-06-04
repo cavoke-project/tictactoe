@@ -1,0 +1,16 @@
+{
+  "id": "my_cavoke_game",
+  "display_name": "My Cavoke Game",
+  "description": "Template Cavoke Game",
+  "players_num": 4,
+  "role_names": [
+    "Player A",
+    "Player B",
+    "Player C",
+    "Player D"
+  ],
+  "default_settings": {
+  },
+  "app_type": "LOCAL",
+  "url": ""
+}
