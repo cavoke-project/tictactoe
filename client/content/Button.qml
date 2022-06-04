@@ -39,72 +39,41 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import "content"
-import "content/interactions.js" as Interact
 
 Rectangle {
-    // BEGIN cavoke section
-    Connections {
-        target: cavoke
+    id: container
 
-        function onReceiveUpdate(jsonUpdate) {
-            console.log("Received: " + jsonUpdate);
-            Interact.processResponse(jsonUpdate);
+    property string text
+    property bool pressed: false
+
+    signal clicked
+
+    width: buttonLabel.width + 20; height: buttonLabel.height + 6
+    border { width: 1; color: Qt.darker(container.color) }
+    radius: 8
+    color: "lightgray"
+    smooth: true
+
+    gradient: Gradient {
+        GradientStop {
+            position: 0.0
+            color: container.pressed ? "darkgray" : "white"
+        }
+        GradientStop {
+            position: 1.0
+            color: container.color
         }
     }
-    // END cavoke section
 
-    id: game
-
-    width: display.width; height: display.height + 10
-
-    Image {
-        id: boardImage
-        source: "content/pics/board.png"
-    }
-
-    Column {
-        id: display
-
-        Grid {
-            id: board
-            width: boardImage.width; height: boardImage.height
-            columns: 3
-
-            Repeater {
-                model: 9
-
-                TicTac {
-                    width: board.width/3
-                    height: board.height/3
-
-                    onClicked: {
-                            Interact.sendMove(String(index));
-                    }
-                }
-            }
-        }
-
-        Row {
-            spacing: 4
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
+    MouseArea {
+        anchors.fill: parent
+        onClicked: container.clicked()
     }
 
     Text {
-        id: messageDisplay
-        anchors.centerIn: parent
-        color: "blue"
-        style: Text.Outline; styleColor: "white"
-        font.pixelSize: 50; font.bold: true
-        visible: false
-
-        Timer {
-            running: messageDisplay.visible
-            onTriggered: {
-                messageDisplay.visible = false;
-                Interact.resetField();
-            }
-        }
+        id: buttonLabel
+        anchors.centerIn: container
+        text: container.text
+        font.pixelSize: 14
     }
 }

@@ -1,24 +1,175 @@
+#include <sstream>
 #include "cavoke.h"
 
 namespace cavoke {
 
 bool validate_settings(
-    const json &settings, const std::vector<int> &occupied_positions,
+    const json &settings,
+    const std::vector<int> &occupied_positions,
     const std::function<void(std::string)> &message_callback) {
-  // TODO: Implement your game validation here
-  return true;
+    if (occupied_positions.size() != 2) {
+        message_callback("Not enough players");
+        return false;
+    }
+
+    if (!settings.contains("board_size")) {
+        message_callback("No board_size property");
+        return false;
+    }
+
+    if (settings["board_size"].get<int>() != 3 &&
+        settings["board_size"].get<int>() != 5) {
+        message_callback("Only 3 and 5 board_size values are supported");
+        return false;
+    }
+
+    return true;
+}
+
+int get_board_size(const std::string &board) {
+    return static_cast<int>(sqrt(static_cast<double>(board.size())));
+}
+
+char current_player(const std::string &board) {
+    int xs_cnt = 0;
+    int os_cnt = 0;
+    for (int i = 0; i < board.size(); ++i) {
+        if (board[i] == 'X') {
+            xs_cnt++;
+        } else if (board[i] == 'O') {
+            os_cnt++;
+        }
+    }
+
+    return (xs_cnt == os_cnt ? 'X' : 'O');
+}
+
+int extract_position(const std::string &move) {
+    std::stringstream to_split(move);
+    char action;
+    to_split >> action;
+    int position;
+    to_split >> position;
+    return position;
+};
+
+bool is_valid_move(const std::string &board, int position) {
+    return position >= 0 && position < board.size() && board[position] == ' ';
+}
+
+bool is_full(const std::string &board) {
+    return std::none_of(board.begin(), board.end(),
+                        [](char c) { return c == ' '; });
+}
+
+int coord_to_pos(int x, int y, int board_size) {
+    return x * board_size + y;
+}
+
+// TODO: fix for 5x5 board
+bool winner(const std::string &board) {
+    int board_size = get_board_size(board);
+    int row_to_win = (board_size == 3 ? 3 : 4);
+
+    for (int i = 0; i < board_size; ++i) {
+        for (int j = 0; j < board_size; ++j) {
+            char cur = board[coord_to_pos(i, j, board_size)];
+            if (cur == ' ') {
+                continue;
+            }
+
+            // vertical
+            if (i + row_to_win <= board_size) {
+                bool flag = true;
+                for (int k = 1; k < row_to_win; ++k) {
+                    if (board[coord_to_pos(i + k, j, board_size)] != cur) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    return true;
+                }
+            }
+
+            // horizontal
+            if (j + row_to_win <= board_size) {
+                bool flag = true;
+                for (int k = 1; k < row_to_win; ++k) {
+                    if (board[coord_to_pos(i, j + k, board_size)] != cur) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    return true;
+                }
+            }
+
+            // diag 1
+            if (i + row_to_win <= board_size && j + row_to_win <= board_size) {
+                bool flag = true;
+                for (int k = 1; k < row_to_win; ++k) {
+                    if (board[coord_to_pos(i + k, j + k, board_size)] != cur) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    return true;
+                }
+            }
+
+            // diag 2
+            if (i - row_to_win >= -1 && j + row_to_win <= board_size) {
+                bool flag = true;
+                for (int k = 1; k < row_to_win; ++k) {
+                    if (board[coord_to_pos(i - k, j + k, board_size)] != cur) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 GameState init_state(const json &settings,
                      const std::vector<int> &occupied_positions) {
-  // TODO: Implement your game start here
+    int board_size = settings["board_size"];
+    std::string board(board_size * board_size, ' ');
 
-  return GameState{false, "<INIT_STATE>", {}, {}};
+    return GameState{false, board, {board, board}, {}};
 }
 
 GameState apply_move(GameMove &new_move) {
-  // TODO: Implement your game move event processing here
+    std::string &board = new_move.global_state;
+    char player = (new_move.player_id == 0 ? 'X' : 'O');
 
-  return GameState{false, "<GLOBAL_STATE>", {}, {}};
+    if (player != current_player(board)) {
+        return {false, board, {board, board}, {}};
+    }
+
+    int position = extract_position(new_move.move);
+
+    if (!is_valid_move(board, position)) {
+        return {false, board, {board, board}, {}};
+    }
+
+    board[position] = player;
+    bool win = winner(board);
+    bool full = is_full(board);
+
+    std::vector<int> winners;
+    if (win) {
+        winners.push_back(new_move.player_id);
+    }
+
+    return {win || full, board, {board, board}, winners};
 }
-} // namespace cavoke
+}  // namespace cavoke

@@ -39,72 +39,22 @@
 ****************************************************************************/
 
 import QtQuick 2.0
-import "content"
-import "content/interactions.js" as Interact
 
-Rectangle {
-    // BEGIN cavoke section
-    Connections {
-        target: cavoke
+Item {
+    signal clicked
 
-        function onReceiveUpdate(jsonUpdate) {
-            console.log("Received: " + jsonUpdate);
-            Interact.processResponse(jsonUpdate);
-        }
-    }
-    // END cavoke section
-
-    id: game
-
-    width: display.width; height: display.height + 10
+    states: [
+        State { name: "X"; PropertyChanges { target: image; source: "pics/x.png" } },
+        State { name: "O"; PropertyChanges { target: image; source: "pics/o.png" } }
+    ]
 
     Image {
-        id: boardImage
-        source: "content/pics/board.png"
-    }
-
-    Column {
-        id: display
-
-        Grid {
-            id: board
-            width: boardImage.width; height: boardImage.height
-            columns: 3
-
-            Repeater {
-                model: 9
-
-                TicTac {
-                    width: board.width/3
-                    height: board.height/3
-
-                    onClicked: {
-                            Interact.sendMove(String(index));
-                    }
-                }
-            }
-        }
-
-        Row {
-            spacing: 4
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
-    }
-
-    Text {
-        id: messageDisplay
+        id: image
         anchors.centerIn: parent
-        color: "blue"
-        style: Text.Outline; styleColor: "white"
-        font.pixelSize: 50; font.bold: true
-        visible: false
+    }
 
-        Timer {
-            running: messageDisplay.visible
-            onTriggered: {
-                messageDisplay.visible = false;
-                Interact.resetField();
-            }
-        }
+    MouseArea {
+        anchors.fill: parent
+        onClicked: parent.clicked()
     }
 }
